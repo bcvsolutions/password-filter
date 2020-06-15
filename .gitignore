@@ -3,7 +3,7 @@
 #### VS cache options
 .vs/
 
-.user
+*.user
 
 ####Build results
 x64/

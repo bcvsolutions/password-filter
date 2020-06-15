@@ -10,4 +10,14 @@
 // add headers that you want to pre-compile here
 #include "framework.h"
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <locale>
+#include <codecvt>
+#include <cwctype>
+#include <iomanip>
+#include <filesystem>
+
+
 #endif //PCH_H

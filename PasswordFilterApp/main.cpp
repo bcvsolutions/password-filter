@@ -1,10 +1,10 @@
+#include "pch.h" // precompiled headers - hast to be the first include
 #include <iostream>
-#include "pch.h"
 #include "passwordFilter.h"
-
 
 int main(int argc, char* argv[], char* envp[])
 {
-   function1();
+
    return 0;
 }
+

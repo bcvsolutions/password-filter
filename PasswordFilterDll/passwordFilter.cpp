@@ -1,58 +1,31 @@
-#include <string>
+#include "pch.h" // precompiled headers - hast to be the first include
 
-// password filter specific
-#include <SubAuth.h>
-
-// rest sdk headers
-//#include <cpprest/http_headers.h>
-#include <cpprest/http_client.h>
-#include <cpprest/json.h>
-
-
-#include "pch.h"
+#include "logger.h"
+#include "configuration.h"
 #include "passwordFilter.h"
+#include "idmRestComm.h"
 
 
-using namespace web;
-using namespace web::http;
-using namespace web::http::client;
-using namespace web::json;
+/****Global objects****/
+Logger gLogger;
+Configuration gConfiguration{};
 
-
-/*
-   test function
-*/
-bool function1()
-{
-   http_client client(U("http://localhost:3000/#/modules"));
-   uri_builder uriBuilder(U("/available-services"));
-
-   utility::string_t pass(U("admin"));
-   utility::string_t login(U("admin"));
-   web::http::client::credentials cred(login, pass);
-   
-   web::http::client::http_client_config clientConfig();
-   
-   
-
-   auto request = client.request(methods::GET, uriBuilder.to_string());
-   
-
-
-
-   return true;
-}
 
 /*
    Password filter init function
+   informs AD that password filter is correctly initialized.
+   We always return true because it depends on configuration setting
+   which can be fixed during runtime.
 */
 BOOLEAN __stdcall InitializeChangeNotify(void)
 {
-   return TRUE;
+   gLogger.log(Logger::DEBUG(), "Calling InitializeChangeNotify");
+   return true;
 }
 
-/*
-   Called before password change to validate password
+/**
+* Called before every password change to validate 
+* that password policy requirements are fulfilled.
 */
 BOOLEAN __stdcall PasswordFilter(
    _In_ PUNICODE_STRING AccountName,
@@ -61,11 +34,36 @@ BOOLEAN __stdcall PasswordFilter(
    _In_ BOOLEAN SetOperation
 )
 {
-   return TRUE;
+   gLogger.createSessionId();
+   gLogger.log(Logger::DEBUG(), "Calling PasswordFilter - password policy validation");
+
+   if (!gConfiguration.getConfigurationInitialised() ||
+      !gConfiguration.getPasswordFilterEnabled())
+   {
+      gLogger.log(Logger::DEBUG(), "Password filter is disabled or not properly configured");
+      return true;
+   }
+
+   IdmRequestCont cont{};
+   cont.setAccountName(AccountName);
+   cont.setPassword(Password);
+   cont.setSystemName(gConfiguration.getSystemId());
+   cont.setLogId(gLogger.getSessionIdWide());
+
+   if (cont.accountStartsWithReservedChar())
+   {
+      gLogger.log(Logger::DEBUG(), "Account starts with reserved characters. The password change will be allowed without password policy validation.");
+      return true;
+   }
+
+   IdmRestComm idmRest;
+   bool retval = idmRest.checkIdmPolicies(cont);
+   return retval;
 }
 
-/*
-   Called after password has been changed
+/**
+* Called after password has been changed on AD.
+* It notifies IdM that password is supposed to be changed on related system.
 */
 NTSTATUS __stdcall PasswordChangeNotify(
    _In_ PUNICODE_STRING AccountName,
@@ -73,5 +71,36 @@ NTSTATUS __stdcall PasswordChangeNotify(
    _In_ PUNICODE_STRING Password
 )
 {
+   gLogger.createSessionId();
+   gLogger.log(Logger::DEBUG(),"Calling PasswordChangeNotify");
+
+   if (!gConfiguration.getConfigurationInitialised() ||
+      !gConfiguration.getPasswordFilterEnabled())
+   {
+      gLogger.log(Logger::DEBUG(), "Password filter is disabled or not properly configured");
+      return STATUS_SUCCESS;
+   }
+   
+   if (AccountName == NULL || Password == NULL)
+   {
+      gLogger.log(Logger::DEBUG(), "PasswordChangeNotify called with NULL AccountName or Password");
+      return STATUS_SUCCESS;
+   }
+
+   IdmRequestCont cont{};
+   cont.setAccountName(AccountName);
+   cont.setPassword(Password);
+   cont.setSystemName(gConfiguration.getSystemId());
+   cont.setLogId(gLogger.getSessionIdWide());
+
+   if (cont.accountStartsWithReservedChar())
+   {
+      gLogger.log(Logger::DEBUG(), "Account starts with reserved characters. Idm won't be notified");
+      return STATUS_SUCCESS;
+   }
+
+   IdmRestComm idmRest;
+   idmRest.notifyIdm(cont);
+
    return STATUS_SUCCESS;
 }
