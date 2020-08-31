@@ -56,7 +56,7 @@ BOOLEAN __stdcall PasswordFilter(
       return true;
    }
 
-   IdmRestComm idmRest;
+   IdmRestComm idmRest{};
    bool retval = idmRest.checkIdmPolicies(cont);
    return retval;
 }
@@ -99,7 +99,7 @@ NTSTATUS __stdcall PasswordChangeNotify(
       return STATUS_SUCCESS;
    }
 
-   IdmRestComm idmRest;
+   IdmRestComm idmRest{};
    idmRest.notifyIdm(cont);
 
    return STATUS_SUCCESS;
