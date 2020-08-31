@@ -1,0 +1,11 @@
+
+
+#### VS cache options
+.vs/
+
+*.user
+
+####Build results
+x64/
+PasswordFilterApp/x64/
+PasswordFilterDll/x64/
