@@ -18,6 +18,7 @@ namespace wj = web::json;
 class Configuration
 {
 private:
+   const constexpr static char* sConfigFileEnvVar = "BCV_PWF_CONFIG_FILE_PATH";
    const constexpr static char* sConfigFilePath = "c:/CzechIdM/PasswordFilter/etc/PasswordFilterConfig.cfg";
    const unsigned int mCfgFileCheckPeriodSec = 3;
    // JSON keys
@@ -61,6 +62,7 @@ private:
 
    pplx::task<void> mMonitorThread;
    std::filesystem::file_time_type mLastFileChange;
+   std::string mConfigFilePath;
 
 public:
    Configuration();
@@ -86,5 +88,7 @@ public:
 
 private:
    void initConfigMonitor();
+   void readConfigFilePath();
+   bool isConfigFileChanged();
 };
 
