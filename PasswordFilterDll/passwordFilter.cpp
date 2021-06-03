@@ -50,9 +50,9 @@ BOOLEAN __stdcall PasswordFilter(
    cont.setSystemName(gConfiguration.getSystemId());
    cont.setLogId(gLogger.getSessionIdWide());
 
-   if (cont.accountStartsWithReservedChar())
+   if (cont.accountStartsWithPrefix())
    {
-      gLogger.log(Logger::DEBUG(), "Account starts with reserved characters. The password change will be allowed without password policy validation.");
+      gLogger.log(Logger::DEBUG(), "Account starts with the reserved prefix. The password change will be allowed without password policy validation.");
       return true;
    }
 
@@ -93,9 +93,9 @@ NTSTATUS __stdcall PasswordChangeNotify(
    cont.setSystemName(gConfiguration.getSystemId());
    cont.setLogId(gLogger.getSessionIdWide());
 
-   if (cont.accountStartsWithReservedChar())
+   if (cont.accountStartsWithPrefix())
    {
-      gLogger.log(Logger::DEBUG(), "Account starts with reserved characters. Idm won't be notified");
+      gLogger.log(Logger::DEBUG(), "Account starts with reserved prefix. Idm notification is skipped");
       return STATUS_SUCCESS;
    }
 

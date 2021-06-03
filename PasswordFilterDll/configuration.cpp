@@ -85,8 +85,12 @@ void Configuration::initConfigFile()
       proveKeyPresence(rootObj, mAllowChangeByDefaultKey, &wj::value::has_boolean_field, true);
       mAllowChangeByDefault = rootObj[mAllowChangeByDefaultKey].as_bool();
 
-      proveKeyPresence(rootObj, mForbiddenInitCharsKey, &wj::value::has_string_field, true);
-      mForbiddenInitChars = rootObj[mForbiddenInitCharsKey].as_string();
+      proveKeyPresence(rootObj, mSkippedAccPrefixKey, &wj::value::has_array_field, true);
+      auto skippedPrefixes = rootObj[mSkippedAccPrefixKey].as_array();
+      std::transform(skippedPrefixes.begin(), skippedPrefixes.end(), std::back_inserter(mSkippedAccPrefixVec), [](const wj::value& item)
+         {
+            return item.as_string();
+         });
       
       proveKeyPresence(rootObj, mLogLevelKey, &wj::value::has_string_field, true);
       mLogLevel = rootObj[mLogLevelKey].as_string();

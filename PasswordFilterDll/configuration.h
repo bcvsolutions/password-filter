@@ -28,7 +28,7 @@ private:
    const ut::string_t mRestNotifyUrlKey{ U("restNotifyUrl") };
 
    const ut::string_t mTokenKey{ U("token") };
-   const ut::string_t mForbiddenInitCharsKey{ U("forbiddenInitChars") };
+   const ut::string_t mSkippedAccPrefixKey{ U("skippedAccPrefix") };
 
    const ut::string_t mConnectionAttemptsKey{ U("connectionAttempts") };
    const ut::string_t mConnectionTimeoutMsKey{ U("connectionTimeoutMs") };
@@ -48,7 +48,7 @@ private:
    uint32_t mConnectionAttempts = 1;
 
    ut::string_t mToken;
-   ut::string_t mForbiddenInitChars;
+   std::vector<ut::string_t> mSkippedAccPrefixVec;
    ut::string_t mLogLevel;
 
    ut::string_t mVersion;
@@ -76,7 +76,7 @@ public:
    const uint32_t& getConnectionAttempts() { return mConnectionAttempts; }
    const bool getIgnoreCertificate() { return mIgnoreCertificate; }
    const ut::string_t& getSystemId() { return mSystemId; }
-   const ut::string_t& getForbiddenInitChars() { return mForbiddenInitChars; }
+   const std::vector<ut::string_t>& getSkippedAccPrefixVec() { return mSkippedAccPrefixVec; }
    const bool getAllowChangeByDefault() {return mAllowChangeByDefault; }
    const ut::string_t getLogLevel() { return mLogLevel; }
    const bool getPasswordFilterEnabled() { return mPasswordFilterEnabled; }

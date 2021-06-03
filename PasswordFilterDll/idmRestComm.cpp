@@ -204,15 +204,16 @@ wj::value IdmRequestCont::toJsonObject() const
    return obj;
 }
 
-bool IdmRequestCont::accountStartsWithReservedChar()
+bool IdmRequestCont::accountStartsWithPrefix()
 {
-   const ut::string_t& reserved = gConfiguration.getForbiddenInitChars();
+   const std::vector<ut::string_t>& reserved = gConfiguration.getSkippedAccPrefixVec();
    if (mAccountName.size() == 0 || reserved.size() == 0)
       return false;
 
-   for (ut::string_t::value_type ch : reserved)
+   for (ut::string_t prefix  : reserved)
    {
-      if (ch == mAccountName[0])
+      ut::string_t::size_type pos = mAccountName.find(prefix);
+      if (pos == 0) // has to be found at the beginning 
          return true;
    }
    return false;
