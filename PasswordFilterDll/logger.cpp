@@ -6,7 +6,8 @@ thread_local unsigned long Logger::sSessionId = 0;
 
 Logger::Logger()
 {
-   fs::path path(sLogFileLoc);
+   readLoggerFileLocation();
+   fs::path path(mLogFileFolder);
    std::error_code errCode; // used just not to throw
    if (!fs::exists(path, errCode))
    {
@@ -112,4 +113,10 @@ std::string Logger::formatMessage(const char* fmt, ...)
    std::string out = formatMessage(fmt, va);
    va_end(va);
    return out;
+}
+
+void Logger::readLoggerFileLocation()
+{
+   const char* logFileFolder = std::getenv(sLogFileEnvVar);
+   mLogFileFolder = logFileFolder == nullptr ? sLogFileLoc : logFileFolder;
 }

@@ -29,6 +29,7 @@ class Logger
 public:
    using lpl = log4cpp::Priority::PriorityLevel;
 private:
+   static inline const char* sLogFileEnvVar = "BCV_PWF_LOG_FILE_FOLDER";
    static inline const char* sLogFileLoc = "c:/CzechIdM/PasswordFilter/log/";
    static inline const char* sLogFileName = "PasswordFilterLog.log";
    static constexpr const char* sEventSourceName = "CzechIdMPasswordFilter";
@@ -39,8 +40,10 @@ private:
    std::reference_wrapper<log4cpp::Category> mCategory = std::ref(log4cpp::Category::getRoot());
    std::unique_ptr<log4cpp::Appender> mEventAppender = std::make_unique<log4cpp::NTEventLogAppender>("NTEventLogAppender", sEventSourceName);
    std::unique_ptr<log4cpp::Appender> mFileAppender;
+   std::string mLogFileFolder;
 
    ut::string_t toUpperCase(const ut::string_t& str) const;
+   void readLoggerFileLocation();
 
 public:
    Logger();
