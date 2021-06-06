@@ -16,7 +16,9 @@ extern Configuration gConfiguration;
 */
 bool IdmRestComm::checkIdmPolicies(const IdmRequestCont& body)
 {
-   gLogger.log(Logger::DEBUG(), "Calling checkIdmPolicies");
+   gLogger.log(Logger::INFO(), "Account: %s - Starting password policy validation", Logger::w2s(body.getAccountName()).c_str());
+   bool result = gConfiguration.getAllowChangeByDefault(); // the default value is ovrriden based on respones from IdM
+   bool resolved = false;
    bool securityFailure = false;
    const auto& urlBaseVec = gConfiguration.getRestBaseUrlVec();
    // iterate over alternative base urls if connection fails
@@ -38,21 +40,26 @@ bool IdmRestComm::checkIdmPolicies(const IdmRequestCont& body)
             switch (action)
             {
             case IdmResponseCont::PF_ACT_TRUE:
-               return true;
-               //break;
+               resolved = true;
+               result = true;
+               break;
             case IdmResponseCont::PF_ACT_FALSE:
-               return false;
-               //break;
+               resolved = true;
+               result = false;
+               break;
             case IdmResponseCont::PF_ACT_CFG_DEFAULT:
-               return gConfiguration.getAllowChangeByDefault();
-               //break;
+               resolved = true;
+               result = gConfiguration.getAllowChangeByDefault();
+               break;
             case IdmResponseCont::PF_ACT_TRY_AGAIN:
-                  continue;
+               continue;
                //break;
             default:
                continue;
                //break;
             }
+            if (resolved)
+               break;
          }
          catch (const wj::json_exception& jsonEx)
          {
@@ -68,10 +75,14 @@ bool IdmRestComm::checkIdmPolicies(const IdmRequestCont& body)
             gLogger.log(Logger::ERROR(), "An unexpected error occurred in checkIdmPolicies: %s", ex.what());
          }
       }
+      if (resolved)
+         break;
    }
    if (securityFailure) // return false in case of secure connection troubles
-      return false;
-   return gConfiguration.getAllowChangeByDefault(); // this value is returned as the failback if something unpredictable happend
+      result = false;
+   
+   gLogger.log(Logger::INFO(), "Account: %s - Password policy validation completed with the result: %s", Logger::w2s(body.getAccountName()).c_str(), Logger::w2s(getChangeDecisionText(result)).c_str());
+   return result;
 }
 
 
@@ -81,7 +92,7 @@ bool IdmRestComm::checkIdmPolicies(const IdmRequestCont& body)
 */
 void IdmRestComm::notifyIdm(const IdmRequestCont& body)
 {
-   gLogger.log(Logger::DEBUG(), "Calling notifyIdm");
+   gLogger.log(Logger::INFO(), "Account: %s - Notifying IdM about password change", Logger::w2s(body.getAccountName()).c_str());
    const auto& urlBaseVec = gConfiguration.getRestBaseUrlVec();
    // iterate over alternative base urls if connection fails
    for (const ut::string_t& baseUrl : urlBaseVec) 
@@ -98,12 +109,12 @@ void IdmRestComm::notifyIdm(const IdmRequestCont& body)
             auto httpStatus = response.status_code();
             if (httpStatus == wh::status_codes::OK)
             {
-               gLogger.log(Logger::INFO(), "Idm successfully notified");
+               gLogger.log(Logger::INFO(), "Account: %s - IdM notification is successful", Logger::w2s(body.getAccountName()).c_str());
                return;
             }
             else
             {
-               gLogger.log(Logger::WARN(), "Idm notify function received http status: %u", httpStatus);
+               gLogger.log(Logger::WARN(), "Account: %s - IdM notification response returned with the http status: %u", Logger::w2s(body.getAccountName()).c_str(), httpStatus);
                return;
             }
          }
@@ -116,6 +127,7 @@ void IdmRestComm::notifyIdm(const IdmRequestCont& body)
             gLogger.log(Logger::ERROR(), "An unexpected error occurred in notifyIdm: %s", ex.what());
          }
       }
+      gLogger.log(Logger::INFO(), "Account: %s - IdM notification ended with an exception", Logger::w2s(body.getAccountName()).c_str());
    }
 }
 
@@ -171,6 +183,14 @@ bool IdmRestComm::isSecurityFailure(const wh::http_exception& e)
          return true;
    }
    return false;
+}
+
+ut::string_t IdmRestComm::getChangeDecisionText(bool decision)
+{
+   if (decision)
+      return U("APPROVED");
+   else
+      return U("DISAPPROVED");
 }
 
 ///////////////// IdmRequestCont //////////////////////////////

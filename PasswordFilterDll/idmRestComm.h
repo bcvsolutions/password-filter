@@ -108,6 +108,7 @@ private:
    constexpr static wchar_t sIdmContentType[] = U("application/json");
    void addTokenAuthentication(wh::http_headers& head) const;
    bool isSecurityFailure(const wh::http_exception& e);
+   ut::string_t getChangeDecisionText(bool decision);
 
 public:
    IdmRestComm() {};

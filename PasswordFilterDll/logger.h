@@ -56,6 +56,7 @@ public:
 
    static std::string formatMessage(const char* fmt, va_list va);
    static std::string formatMessage(const char* fmt, ...);
+   static std::string& removeNewLine(std::string& str); // in place new line removing
    static const std::string w2s(const ut::string_t& str);
    static const ut::string_t s2w(const std::string& str);
    static lpl ERROR() { return lpl::ERROR; }

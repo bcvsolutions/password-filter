@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <algorithm>
 #include "logger.h"
 
 
@@ -90,8 +91,9 @@ void Logger::log(lpl level, const char* fmt, ...)
    va_start(va, fmt);
    std::string msg = formatMessage(fmt, va);
    va_end(va);
-   std::string out = std::string("SessionId: ") + getSessionId() + " ";
+   std::string out = std::string("\tSessionId: ") + getSessionId() + " ";
    out += msg;
+   removeNewLine(out);
    mCategory.get().log(level, out.c_str());
 }
 
@@ -113,6 +115,20 @@ std::string Logger::formatMessage(const char* fmt, ...)
    std::string out = formatMessage(fmt, va);
    va_end(va);
    return out;
+}
+
+std::string& Logger::removeNewLine(std::string& str)
+{
+   str.erase(std::remove_if(str.begin(), str.end(), [](char ch)
+      {
+         if (ch == '\r' || ch == '\n')
+            return true;
+         else
+            return false;
+      }),
+      str.end());
+   
+   return str;
 }
 
 void Logger::readLoggerFileLocation()
