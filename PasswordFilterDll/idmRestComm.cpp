@@ -239,7 +239,7 @@ bool IdmRequestCont::accountStartsWithPrefix()
    return false;
 }
 
-ut::string_t IdmRequestCont::pUnicode2String(const PUNICODE_STRING uniStr) const
+ut::string_t IdmRequestCont::pUnicode2String(const PUNICODE_STRING uniStr)
 {
    if (uniStr != nullptr && uniStr->Buffer != nullptr && uniStr->Length > 0 )
       return ut::string_t(uniStr->Buffer, uniStr->Length / sizeof(uniStr->Buffer[0]));
@@ -262,7 +262,7 @@ IdmResponseCont::IdmResponseCont(const wh::http_response& response)
    }
    catch (const std::exception& e)
    {
-      gLogger.log(Logger::WARN(), "An exception occurred during parsing of the validation response: %s", e.what());
+      gLogger.log(Logger::WARN(), "An exception occurred during parsing the validation response: %s", e.what());
    }
    mPassFiltAction = deducePassFiltAction();
 }
@@ -324,7 +324,7 @@ IdmResponseCont::passFiltAction IdmResponseCont::deducePassFiltAction() const
          mStatusEnum.compare(sIdentityNotFound) == 0 ||
          mStatusEnum.compare(sDefinitionNotFound) == 0))
       {
-         gLogger.log(Logger::INFO(), "Some of searched entities are missing in Idm: %s", Logger::w2s(mStatusEnum).c_str());
+         gLogger.log(Logger::INFO(), "Some searched entities are missing in Idm: %s", Logger::w2s(mStatusEnum).c_str());
          return passFiltAction::PF_ACT_TRUE; // any Idm item (identity, system, account) wasn't found; PF has to allow pass change
       }
    }
@@ -336,6 +336,6 @@ IdmResponseCont::passFiltAction IdmResponseCont::deducePassFiltAction() const
       return PF_ACT_TRY_AGAIN;
    }
 
-   gLogger.log(Logger::INFO(), "Password filter received a response with http status: %u and Idm statusEnum: %s", mResultCode, Logger::w2s(mStatusEnum).c_str());
+   gLogger.log(Logger::INFO(), "Password filter received a response with the http status: %u and the Idm statusEnum: %s", mResultCode, Logger::w2s(mStatusEnum).c_str());
    return PF_ACT_FALSE;
 }

@@ -65,6 +65,11 @@ void Logger::createSessionId() const
    sSessionId = dis(gen);
 }
 
+unsigned long Logger::getSessionIdValue() const
+{
+   return sSessionId;
+}
+
 std::string Logger::getSessionId() const
 {
    return std::to_string(sSessionId);
@@ -91,7 +96,8 @@ void Logger::log(lpl level, const char* fmt, ...)
    va_start(va, fmt);
    std::string msg = formatMessage(fmt, va);
    va_end(va);
-   std::string out = std::string("\tSessionId: ") + getSessionId() + " ";
+   std::string fmtSessionId = formatMessage("%010u", getSessionIdValue());
+   std::string out = std::string("\tSessionId: ") + fmtSessionId + " ";
    out += msg;
    removeNewLine(out);
    mCategory.get().log(level, out.c_str());

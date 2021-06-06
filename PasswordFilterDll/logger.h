@@ -52,6 +52,7 @@ public:
    void createSessionId() const;
    std::string getSessionId() const;
    ut::string_t getSessionIdWide() const;
+   unsigned long getSessionIdValue() const;
    void log(lpl level, const char* fmt, ...); // follows the same signature as log form log4cpp
 
    static std::string formatMessage(const char* fmt, va_list va);

@@ -103,7 +103,7 @@ void Configuration::initConfigFile()
       // special workaroud how to reinit logger level from default value
       gLogger.reconfigurePriority(mLogLevel);
 
-      gLogger.log(Logger::INFO(), "Configuration has been successfully initialized from file: \"%s\"", mConfigFilePath.c_str());
+      gLogger.log(Logger::INFO(), "Configuration has been successfully initialized from the file: \"%s\"", mConfigFilePath.c_str());
    }
    catch (const std::exception& ex)
    {
@@ -153,7 +153,7 @@ void Configuration::readConfigFilePath()
       mConfigFilePath.clear();
       mConfigFilePath.insert(0, configFileName);
       mLastFileChange = fs::file_time_type(); // force file reload
-      gLogger.log(Logger::INFO(), "Configuration file will be loaded from path %s", configFileName);
+      gLogger.log(Logger::INFO(), "Configuration file will be loaded from the path %s", configFileName);
    }
 }
 

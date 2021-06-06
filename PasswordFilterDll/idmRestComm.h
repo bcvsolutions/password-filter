@@ -49,8 +49,8 @@ public:
    std::string toJsonString8() const;
    wj::value toJsonObject() const;
 
-private:
-   ut::string_t pUnicode2String(const PUNICODE_STRING) const;
+   static ut::string_t pUnicode2String(const PUNICODE_STRING);
+   
 };
 
 /**
