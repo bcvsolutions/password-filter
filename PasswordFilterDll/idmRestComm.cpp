@@ -234,7 +234,10 @@ bool IdmRequestCont::accountStartsWithPrefix()
    {
       ut::string_t::size_type pos = mAccountName.find(prefix);
       if (pos == 0) // has to be found at the beginning 
+      {
+         gLogger.log(Logger::DEBUG(), "The account starts with reserved prefix: %s", Logger::w2s(prefix).c_str());
          return true;
+      }
    }
    return false;
 }

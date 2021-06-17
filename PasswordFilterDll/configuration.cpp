@@ -56,6 +56,7 @@ void Configuration::initConfigFile()
       wj::value rootObj = wj::value::parse(cfgFile);
       proveKeyPresence(rootObj, mRestBaseUrlKey, &wj::value::has_array_field, true);
       auto restBaseUrls = rootObj[mRestBaseUrlKey].as_array();
+      mRestBaseUrlVec.clear();
       std::transform(restBaseUrls.begin(), restBaseUrls.end(), std::back_inserter(mRestBaseUrlVec), [](const wj::value& item)
          {
             return item.as_string();
@@ -87,6 +88,7 @@ void Configuration::initConfigFile()
 
       proveKeyPresence(rootObj, mSkippedAccPrefixKey, &wj::value::has_array_field, true);
       auto skippedPrefixes = rootObj[mSkippedAccPrefixKey].as_array();
+      mSkippedAccPrefixVec.clear();
       std::transform(skippedPrefixes.begin(), skippedPrefixes.end(), std::back_inserter(mSkippedAccPrefixVec), [](const wj::value& item)
          {
             return item.as_string();
