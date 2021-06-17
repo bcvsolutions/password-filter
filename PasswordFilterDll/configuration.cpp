@@ -106,6 +106,7 @@ void Configuration::initConfigFile()
       gLogger.reconfigurePriority(mLogLevel);
 
       gLogger.log(Logger::INFO(), "Configuration has been successfully initialized from the file: \"%s\"", mConfigFilePath.c_str());
+      printLogFileContent();
    }
    catch (const std::exception& ex)
    {
@@ -174,5 +175,43 @@ bool Configuration::isConfigFileChanged()
       return true;
    }
    return false;
+}
+
+void Configuration::printLogFileContent() const
+{
+   if (mRestBaseUrlVec.empty())
+      gLogger.log(Logger::DEBUG(), "%s:", Logger::w2s(mRestBaseUrlKey).c_str());
+   else
+   {
+      for (const ut::string_t& url : mRestBaseUrlVec)
+         gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mRestBaseUrlKey).c_str(), Logger::w2s(url).c_str());
+   }
+
+   gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mRestCheckUrlKey).c_str(), Logger::w2s(mRestCheckUrl).c_str());
+   gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mRestNotifyUrlKey).c_str(), Logger::w2s(mRestNotifyUrl).c_str());
+   gLogger.log(Logger::DEBUG(), "%s: %u", Logger::w2s(mConnectionAttemptsKey).c_str(), mConnectionAttempts);
+   gLogger.log(Logger::DEBUG(), "%s: %u", Logger::w2s(mConnectionTimeoutMsKey).c_str(), mConnectionTimeoutMs);
+   gLogger.log(Logger::DEBUG(), "%s: EXCLUDED FROM LOG", Logger::w2s(mTokenKey).c_str());
+
+   std::string boolString = mIgnoreCertificate ? Logger::w2s(U("true")) : Logger::w2s(U("false"));
+   gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mIgnoreCertificateKey).c_str(), boolString.c_str());
+
+   gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mSystemIdKey).c_str(), Logger::w2s(mSystemId).c_str());
+
+   boolString = mAllowChangeByDefault ? Logger::w2s(U("true")) : Logger::w2s(U("false"));
+   gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mAllowChangeByDefaultKey).c_str(), boolString.c_str());
+
+   gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mLogLevelKey).c_str(), Logger::w2s(mLogLevel).c_str());
+
+   if (mSkippedAccPrefixVec.empty())
+      gLogger.log(Logger::DEBUG(), "%s:", Logger::w2s(mSkippedAccPrefixKey).c_str());
+   else
+   {
+      for (const ut::string_t& url : mSkippedAccPrefixVec)
+         gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mSkippedAccPrefixKey).c_str(), Logger::w2s(url).c_str());
+   }
+
+   boolString = mPasswordFilterEnabled ? Logger::w2s(U("true")) : Logger::w2s(U("false"));
+   gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mPasswordFilterEnabledKey).c_str(), boolString.c_str());
 }
 

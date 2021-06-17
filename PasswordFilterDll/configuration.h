@@ -90,5 +90,6 @@ private:
    void initConfigMonitor();
    void readConfigFilePath();
    bool isConfigFileChanged();
+   void printLogFileContent() const;
 };
 
