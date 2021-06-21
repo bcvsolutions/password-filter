@@ -45,6 +45,7 @@ void Configuration::initConfigFile()
 {
    try
    {
+      std::vector<ut::string_t> multivalueStringBuf;
       mConfigurationInitialized.store(false);
       std::fstream cfgFile(mConfigFilePath.c_str(), std::ios_base::in);
       if (cfgFile.fail())
@@ -56,11 +57,12 @@ void Configuration::initConfigFile()
       wj::value rootObj = wj::value::parse(cfgFile);
       proveKeyPresence(rootObj, mRestBaseUrlKey, &wj::value::has_array_field, true);
       auto restBaseUrls = rootObj[mRestBaseUrlKey].as_array();
-      mRestBaseUrlVec.clear();
-      std::transform(restBaseUrls.begin(), restBaseUrls.end(), std::back_inserter(mRestBaseUrlVec), [](const wj::value& item)
+      multivalueStringBuf.clear();
+      std::transform(restBaseUrls.begin(), restBaseUrls.end(), std::back_inserter(multivalueStringBuf), [](const wj::value& item)
          {
             return item.as_string();
          });
+      mRestBaseUrlVec = multivalueStringBuf;
 
       proveKeyPresence(rootObj, mRestCheckUrlKey, &wj::value::has_string_field, true);
       mRestCheckUrl = rootObj[mRestCheckUrlKey].as_string();
@@ -88,11 +90,13 @@ void Configuration::initConfigFile()
 
       proveKeyPresence(rootObj, mSkippedAccPrefixKey, &wj::value::has_array_field, true);
       auto skippedPrefixes = rootObj[mSkippedAccPrefixKey].as_array();
-      mSkippedAccPrefixVec.clear();
-      std::transform(skippedPrefixes.begin(), skippedPrefixes.end(), std::back_inserter(mSkippedAccPrefixVec), [](const wj::value& item)
+      multivalueStringBuf.clear();
+      std::transform(skippedPrefixes.begin(), skippedPrefixes.end(), std::back_inserter(multivalueStringBuf), [](const wj::value& item)
          {
             return item.as_string();
          });
+      mSkippedAccPrefixVec = multivalueStringBuf;
+
       
       proveKeyPresence(rootObj, mLogLevelKey, &wj::value::has_string_field, true);
       mLogLevel = rootObj[mLogLevelKey].as_string();
@@ -106,12 +110,12 @@ void Configuration::initConfigFile()
       gLogger.reconfigurePriority(mLogLevel);
 
       gLogger.log(Logger::INFO(), "Configuration has been successfully initialized from the file: \"%s\"", mConfigFilePath.c_str());
-      printLogFileContent();
    }
    catch (const std::exception& ex)
    {
       gLogger.log(Logger::ERROR(), "Parser of the configuration file \"%s\" encountered the following exception: %s", mConfigFilePath.c_str(), ex.what());
    }
+   printLogFileContent();
 }
 
 void Configuration::initConfigMonitor()
@@ -207,8 +211,8 @@ void Configuration::printLogFileContent() const
       gLogger.log(Logger::DEBUG(), "%s:", Logger::w2s(mSkippedAccPrefixKey).c_str());
    else
    {
-      for (const ut::string_t& url : mSkippedAccPrefixVec)
-         gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mSkippedAccPrefixKey).c_str(), Logger::w2s(url).c_str());
+      for (const ut::string_t& item : mSkippedAccPrefixVec)
+         gLogger.log(Logger::DEBUG(), "%s: %s", Logger::w2s(mSkippedAccPrefixKey).c_str(), Logger::w2s(item).c_str());
    }
 
    boolString = mPasswordFilterEnabled ? Logger::w2s(U("true")) : Logger::w2s(U("false"));
