@@ -37,10 +37,17 @@ BOOLEAN __stdcall PasswordFilter(
    gLogger.createSessionId();
    gLogger.log(Logger::DEBUG(), "Calling PasswordFilter - password policy validation");
 
-   if (!gConfiguration.getConfigurationInitialised() ||
-      !gConfiguration.getPasswordFilterEnabled())
+   if (!gConfiguration.getConfigurationInitialised())
    {
-      gLogger.log(Logger::DEBUG(), "Password filter is disabled or not properly configured");
+      gLogger.log(Logger::INFO(), "Account: %s - Password filter is not configured properly. Password validation is skipped and the change is APPROVED", 
+         Logger::w2s(IdmRequestCont::pUnicode2String(AccountName)).c_str());
+      return true;
+   }
+
+   if (!gConfiguration.getPasswordFilterEnabled())
+   {
+      gLogger.log(Logger::INFO(), "Account: %s - Password filter is disabled. Password validation is skipped and the change is APPROVED",
+         Logger::w2s(IdmRequestCont::pUnicode2String(AccountName)).c_str());
       return true;
    }
 
@@ -50,9 +57,10 @@ BOOLEAN __stdcall PasswordFilter(
    cont.setSystemName(gConfiguration.getSystemId());
    cont.setLogId(gLogger.getSessionIdWide());
 
-   if (cont.accountStartsWithReservedChar())
+   if (cont.accountStartsWithPrefix())
    {
-      gLogger.log(Logger::DEBUG(), "Account starts with reserved characters. The password change will be allowed without password policy validation.");
+      gLogger.log(Logger::INFO(), "Account: %s - Account starts with a reserved string. Password validation is skipped and the change is APPROVED",
+         Logger::w2s(cont.getAccountName()).c_str());
       return true;
    }
 
@@ -74,16 +82,24 @@ NTSTATUS __stdcall PasswordChangeNotify(
    gLogger.createSessionId();
    gLogger.log(Logger::DEBUG(),"Calling PasswordChangeNotify");
 
-   if (!gConfiguration.getConfigurationInitialised() ||
-      !gConfiguration.getPasswordFilterEnabled())
+   if (!gConfiguration.getConfigurationInitialised())
    {
-      gLogger.log(Logger::DEBUG(), "Password filter is disabled or not properly configured");
+      gLogger.log(Logger::INFO(), "Account: %s - Password filter is not configured properly. IdM notification is skipped",
+         Logger::w2s(IdmRequestCont::pUnicode2String(AccountName)).c_str());
+      return STATUS_SUCCESS;
+   }
+
+   if (!gConfiguration.getPasswordFilterEnabled())
+   {
+      gLogger.log(Logger::INFO(), "Account: %s - Password filter is disabled. IdM notification is skipped",
+         Logger::w2s(IdmRequestCont::pUnicode2String(AccountName)).c_str());
       return STATUS_SUCCESS;
    }
    
    if (AccountName == NULL || Password == NULL)
    {
-      gLogger.log(Logger::DEBUG(), "PasswordChangeNotify called with NULL AccountName or Password");
+      gLogger.log(Logger::INFO(), "Account: %s - Account or password is not specified. IdM notification is skipped",
+         Logger::w2s(IdmRequestCont::pUnicode2String(AccountName)).c_str());
       return STATUS_SUCCESS;
    }
 
@@ -93,9 +109,10 @@ NTSTATUS __stdcall PasswordChangeNotify(
    cont.setSystemName(gConfiguration.getSystemId());
    cont.setLogId(gLogger.getSessionIdWide());
 
-   if (cont.accountStartsWithReservedChar())
+   if (cont.accountStartsWithPrefix())
    {
-      gLogger.log(Logger::DEBUG(), "Account starts with reserved characters. Idm won't be notified");
+      gLogger.log(Logger::INFO(), "Account: %s - Account starts with a reserved string. IdM notification is skipped",
+         Logger::w2s(cont.getAccountName()).c_str());
       return STATUS_SUCCESS;
    }
 

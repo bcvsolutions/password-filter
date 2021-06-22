@@ -16,7 +16,9 @@ extern Configuration gConfiguration;
 */
 bool IdmRestComm::checkIdmPolicies(const IdmRequestCont& body)
 {
-   gLogger.log(Logger::DEBUG(), "Calling checkIdmPolicies");
+   gLogger.log(Logger::INFO(), "Account: %s - Starting password policy validation", Logger::w2s(body.getAccountName()).c_str());
+   bool result = gConfiguration.getAllowChangeByDefault(); // the default value is ovrriden based on respones from IdM
+   bool resolved = false;
    bool securityFailure = false;
    const auto& urlBaseVec = gConfiguration.getRestBaseUrlVec();
    // iterate over alternative base urls if connection fails
@@ -38,21 +40,26 @@ bool IdmRestComm::checkIdmPolicies(const IdmRequestCont& body)
             switch (action)
             {
             case IdmResponseCont::PF_ACT_TRUE:
-               return true;
-               //break;
+               resolved = true;
+               result = true;
+               break;
             case IdmResponseCont::PF_ACT_FALSE:
-               return false;
-               //break;
+               resolved = true;
+               result = false;
+               break;
             case IdmResponseCont::PF_ACT_CFG_DEFAULT:
-               return gConfiguration.getAllowChangeByDefault();
-               //break;
+               resolved = true;
+               result = gConfiguration.getAllowChangeByDefault();
+               break;
             case IdmResponseCont::PF_ACT_TRY_AGAIN:
-                  continue;
+               continue;
                //break;
             default:
                continue;
                //break;
             }
+            if (resolved)
+               break;
          }
          catch (const wj::json_exception& jsonEx)
          {
@@ -68,10 +75,14 @@ bool IdmRestComm::checkIdmPolicies(const IdmRequestCont& body)
             gLogger.log(Logger::ERROR(), "An unexpected error occurred in checkIdmPolicies: %s", ex.what());
          }
       }
+      if (resolved)
+         break;
    }
    if (securityFailure) // return false in case of secure connection troubles
-      return false;
-   return gConfiguration.getAllowChangeByDefault(); // this value is returned as the failback if something unpredictable happend
+      result = false;
+   
+   gLogger.log(Logger::INFO(), "Account: %s - Password policy validation completed with the result: %s", Logger::w2s(body.getAccountName()).c_str(), Logger::w2s(getChangeDecisionText(result)).c_str());
+   return result;
 }
 
 
@@ -81,7 +92,7 @@ bool IdmRestComm::checkIdmPolicies(const IdmRequestCont& body)
 */
 void IdmRestComm::notifyIdm(const IdmRequestCont& body)
 {
-   gLogger.log(Logger::DEBUG(), "Calling notifyIdm");
+   gLogger.log(Logger::INFO(), "Account: %s - Notifying IdM about password change", Logger::w2s(body.getAccountName()).c_str());
    const auto& urlBaseVec = gConfiguration.getRestBaseUrlVec();
    // iterate over alternative base urls if connection fails
    for (const ut::string_t& baseUrl : urlBaseVec) 
@@ -98,12 +109,12 @@ void IdmRestComm::notifyIdm(const IdmRequestCont& body)
             auto httpStatus = response.status_code();
             if (httpStatus == wh::status_codes::OK)
             {
-               gLogger.log(Logger::INFO(), "Idm successfully notified");
+               gLogger.log(Logger::INFO(), "Account: %s - IdM notification is successful", Logger::w2s(body.getAccountName()).c_str());
                return;
             }
             else
             {
-               gLogger.log(Logger::WARN(), "Idm notify function received http status: %u", httpStatus);
+               gLogger.log(Logger::WARN(), "Account: %s - IdM notification response returned with the http status: %u", Logger::w2s(body.getAccountName()).c_str(), httpStatus);
                return;
             }
          }
@@ -116,6 +127,7 @@ void IdmRestComm::notifyIdm(const IdmRequestCont& body)
             gLogger.log(Logger::ERROR(), "An unexpected error occurred in notifyIdm: %s", ex.what());
          }
       }
+      gLogger.log(Logger::INFO(), "Account: %s - IdM notification ended with an exception", Logger::w2s(body.getAccountName()).c_str());
    }
 }
 
@@ -173,6 +185,14 @@ bool IdmRestComm::isSecurityFailure(const wh::http_exception& e)
    return false;
 }
 
+ut::string_t IdmRestComm::getChangeDecisionText(bool decision)
+{
+   if (decision)
+      return U("APPROVED");
+   else
+      return U("DISAPPROVED");
+}
+
 ///////////////// IdmRequestCont //////////////////////////////
 
 IdmRequestCont::~IdmRequestCont()
@@ -204,21 +224,25 @@ wj::value IdmRequestCont::toJsonObject() const
    return obj;
 }
 
-bool IdmRequestCont::accountStartsWithReservedChar()
+bool IdmRequestCont::accountStartsWithPrefix()
 {
-   const ut::string_t& reserved = gConfiguration.getForbiddenInitChars();
+   const std::vector<ut::string_t>& reserved = gConfiguration.getSkippedAccPrefixVec();
    if (mAccountName.size() == 0 || reserved.size() == 0)
       return false;
 
-   for (ut::string_t::value_type ch : reserved)
+   for (ut::string_t prefix  : reserved)
    {
-      if (ch == mAccountName[0])
+      ut::string_t::size_type pos = mAccountName.find(prefix);
+      if (pos == 0) // has to be found at the beginning 
+      {
+         gLogger.log(Logger::DEBUG(), "The account starts with reserved prefix: %s", Logger::w2s(prefix).c_str());
          return true;
+      }
    }
    return false;
 }
 
-ut::string_t IdmRequestCont::pUnicode2String(const PUNICODE_STRING uniStr) const
+ut::string_t IdmRequestCont::pUnicode2String(const PUNICODE_STRING uniStr)
 {
    if (uniStr != nullptr && uniStr->Buffer != nullptr && uniStr->Length > 0 )
       return ut::string_t(uniStr->Buffer, uniStr->Length / sizeof(uniStr->Buffer[0]));
@@ -241,7 +265,7 @@ IdmResponseCont::IdmResponseCont(const wh::http_response& response)
    }
    catch (const std::exception& e)
    {
-      gLogger.log(Logger::WARN(), "An exception occurred during parsing of the validation response: %s", e.what());
+      gLogger.log(Logger::WARN(), "An exception occurred during parsing the validation response: %s", e.what());
    }
    mPassFiltAction = deducePassFiltAction();
 }
@@ -303,7 +327,7 @@ IdmResponseCont::passFiltAction IdmResponseCont::deducePassFiltAction() const
          mStatusEnum.compare(sIdentityNotFound) == 0 ||
          mStatusEnum.compare(sDefinitionNotFound) == 0))
       {
-         gLogger.log(Logger::INFO(), "Some of searched entities are missing in Idm: %s", Logger::w2s(mStatusEnum).c_str());
+         gLogger.log(Logger::INFO(), "Some searched entities are missing in Idm: %s", Logger::w2s(mStatusEnum).c_str());
          return passFiltAction::PF_ACT_TRUE; // any Idm item (identity, system, account) wasn't found; PF has to allow pass change
       }
    }
@@ -315,6 +339,6 @@ IdmResponseCont::passFiltAction IdmResponseCont::deducePassFiltAction() const
       return PF_ACT_TRY_AGAIN;
    }
 
-   gLogger.log(Logger::INFO(), "Password filter received a response with http status: %u and Idm statusEnum: %s", mResultCode, Logger::w2s(mStatusEnum).c_str());
+   gLogger.log(Logger::INFO(), "Password filter received a response with the http status: %u and the Idm statusEnum: %s", mResultCode, Logger::w2s(mStatusEnum).c_str());
    return PF_ACT_FALSE;
 }

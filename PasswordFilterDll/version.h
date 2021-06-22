@@ -1,3 +1,3 @@
 #pragma once
 
-static constexpr const char* sVersion = "1.0.0";
+static constexpr const char* sVersion = "1.1.0";

@@ -10,7 +10,9 @@
 // add headers that you want to pre-compile here
 #include "framework.h"
 
+#include <cstdlib>
 #include <iostream>
+#include <iterator>
 #include <fstream>
 #include <string>
 #include <locale>

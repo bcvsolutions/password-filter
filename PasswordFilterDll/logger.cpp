@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <algorithm>
 #include "logger.h"
 
 
@@ -6,7 +7,8 @@ thread_local unsigned long Logger::sSessionId = 0;
 
 Logger::Logger()
 {
-   fs::path path(sLogFileLoc);
+   readLoggerFileLocation();
+   fs::path path(mLogFileFolder);
    std::error_code errCode; // used just not to throw
    if (!fs::exists(path, errCode))
    {
@@ -63,6 +65,11 @@ void Logger::createSessionId() const
    sSessionId = dis(gen);
 }
 
+unsigned long Logger::getSessionIdValue() const
+{
+   return sSessionId;
+}
+
 std::string Logger::getSessionId() const
 {
    return std::to_string(sSessionId);
@@ -89,8 +96,10 @@ void Logger::log(lpl level, const char* fmt, ...)
    va_start(va, fmt);
    std::string msg = formatMessage(fmt, va);
    va_end(va);
-   std::string out = std::string("SessionId: ") + getSessionId() + " ";
+   std::string fmtSessionId = formatMessage("%010u", getSessionIdValue());
+   std::string out = std::string("\tSessionId: ") + fmtSessionId + " ";
    out += msg;
+   removeNewLine(out);
    mCategory.get().log(level, out.c_str());
 }
 
@@ -112,4 +121,24 @@ std::string Logger::formatMessage(const char* fmt, ...)
    std::string out = formatMessage(fmt, va);
    va_end(va);
    return out;
+}
+
+std::string& Logger::removeNewLine(std::string& str)
+{
+   str.erase(std::remove_if(str.begin(), str.end(), [](char ch)
+      {
+         if (ch == '\r' || ch == '\n')
+            return true;
+         else
+            return false;
+      }),
+      str.end());
+   
+   return str;
+}
+
+void Logger::readLoggerFileLocation()
+{
+   const char* logFileFolder = std::getenv(sLogFileEnvVar);
+   mLogFileFolder = logFileFolder == nullptr ? sLogFileLoc : logFileFolder;
 }

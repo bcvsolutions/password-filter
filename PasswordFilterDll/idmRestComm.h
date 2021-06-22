@@ -33,7 +33,7 @@ public:
    ~IdmRequestCont();
    void setAccountName(const PUNICODE_STRING& accountName) { mAccountName = pUnicode2String(accountName); }
    void setPassword(const PUNICODE_STRING& password) { mPassword = pUnicode2String(password); }
-   bool accountStartsWithReservedChar();
+   bool accountStartsWithPrefix();
    
    void setAccountName(const ut::string_t& accountName) { mAccountName = accountName; }
    void setPassword(const ut::string_t& password) { mPassword = password; }
@@ -49,8 +49,8 @@ public:
    std::string toJsonString8() const;
    wj::value toJsonObject() const;
 
-private:
-   ut::string_t pUnicode2String(const PUNICODE_STRING) const;
+   static ut::string_t pUnicode2String(const PUNICODE_STRING);
+   
 };
 
 /**
@@ -108,6 +108,7 @@ private:
    constexpr static wchar_t sIdmContentType[] = U("application/json");
    void addTokenAuthentication(wh::http_headers& head) const;
    bool isSecurityFailure(const wh::http_exception& e);
+   ut::string_t getChangeDecisionText(bool decision);
 
 public:
    IdmRestComm() {};
